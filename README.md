@@ -1,4 +1,4 @@
-# PANNs inferece
+# PANNs inference
 
 **panns_inference** provides an easy to use Python interface for audio tagging and sound event detection. The audio tagging and sound event detection models are trained from PANNs: Large-Scale Pretrained Audio Neural Networks for Audio Pattern Recognition: https://github.com/qiuqiangkong/audioset_tagging_cnn
 

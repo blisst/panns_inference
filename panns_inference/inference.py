@@ -14,8 +14,8 @@ from .config import labels, classes_num
 def create_folder(fd):
     if not os.path.exists(fd):
         os.makedirs(fd)
-        
-        
+
+
 def get_filename(path):
     path = os.path.realpath(path)
     na_ext = path.split('/')[-1]
@@ -28,9 +28,9 @@ class AudioTagging(object):
         """Audio tagging inference wrapper.
         """
         if not checkpoint_path:
-            checkpoint_path='{}/panns_data/Cnn14_mAP=0.431.pth'.format(str(Path.home()))
+            checkpoint_path = '{}/panns_data/Cnn14_mAP=0.431.pth'.format(str(Path.home()))
         print('Checkpoint path: {}'.format(checkpoint_path))
-        
+
         if not os.path.exists(checkpoint_path) or os.path.getsize(checkpoint_path) < 3e8:
             create_folder(os.path.dirname(checkpoint_path))
             zenodo_path = 'https://zenodo.org/record/3987831/files/Cnn14_mAP%3D0.431.pth?download=1'
@@ -38,17 +38,19 @@ class AudioTagging(object):
 
         if device == 'cuda' and torch.cuda.is_available():
             self.device = 'cuda'
+        elif device == 'cuda' and not torch.cuda.is_available() and torch.backends.mps.is_available():
+            self.device = 'mps'
         else:
             self.device = 'cpu'
-        
+
         self.labels = labels
         self.classes_num = classes_num
 
         # Model
         if model is None:
-            self.model = Cnn14(sample_rate=32000, window_size=1024, 
-                hop_size=320, mel_bins=64, fmin=50, fmax=14000, 
-                classes_num=self.classes_num)
+            self.model = Cnn14(sample_rate=32000, window_size=1024,
+                               hop_size=320, mel_bins=64, fmin=50, fmax=14000,
+                               classes_num=self.classes_num)
         else:
             self.model = model
 
@@ -56,7 +58,7 @@ class AudioTagging(object):
         self.model.load_state_dict(checkpoint['model'])
 
         # Parallel
-        if 'cuda' in str(self.device):
+        if 'cuda' in str(self.device) or 'mps' in str(self.device):
             self.model.to(self.device)
             print('GPU number: {}'.format(torch.cuda.device_count()))
             self.model = torch.nn.DataParallel(self.model)
@@ -87,29 +89,30 @@ class SoundEventDetection(object):
             interpolate_mode, 'nearest' |'linear'
         """
         if not checkpoint_path:
-            checkpoint_path='{}/panns_data/Cnn14_DecisionLevelMax.pth'.format(str(Path.home()))
+            checkpoint_path = '{}/panns_data/Cnn14_DecisionLevelMax.pth'.format(str(Path.home()))
         print('Checkpoint path: {}'.format(checkpoint_path))
 
         if not os.path.exists(checkpoint_path) or os.path.getsize(checkpoint_path) < 3e8:
             create_folder(os.path.dirname(checkpoint_path))
-            os.system('wget -O "{}" https://zenodo.org/record/3987831/files/Cnn14_DecisionLevelMax_mAP%3D0.385.pth?download=1'.format(checkpoint_path))
+            os.system(
+                'wget -O "{}" https://zenodo.org/record/3987831/files/Cnn14_DecisionLevelMax_mAP%3D0.385.pth?download=1'.format(checkpoint_path))
 
         if device == 'cuda' and torch.cuda.is_available():
             self.device = 'cuda'
         else:
             self.device = 'cpu'
-        
+
         self.labels = labels
         self.classes_num = classes_num
 
         # Model
         if model is None:
-            self.model = Cnn14_DecisionLevelMax(sample_rate=32000, window_size=1024, 
-                hop_size=320, mel_bins=64, fmin=50, fmax=14000, 
-                classes_num=self.classes_num, interpolate_mode=interpolate_mode)
+            self.model = Cnn14_DecisionLevelMax(sample_rate=32000, window_size=1024,
+                                                hop_size=320, mel_bins=64, fmin=50, fmax=14000,
+                                                classes_num=self.classes_num, interpolate_mode=interpolate_mode)
         else:
             self.model = model
-        
+
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         self.model.load_state_dict(checkpoint['model'])
 
@@ -127,7 +130,7 @@ class SoundEventDetection(object):
         with torch.no_grad():
             self.model.eval()
             output_dict = self.model(
-                input=audio, 
+                input=audio,
                 mixup_lambda=None
             )
 
