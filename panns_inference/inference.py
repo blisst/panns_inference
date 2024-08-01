@@ -119,7 +119,7 @@ class SoundEventDetection(object):
         self.model.load_state_dict(checkpoint['model'])
 
         # Parallel
-        if 'cuda' in str(self.device):
+        if 'cuda' in str(self.device) or 'mps' in str(self.device):
             self.model.to(self.device)
             print('GPU number: {}'.format(torch.cuda.device_count()))
             self.model = torch.nn.DataParallel(self.model)
