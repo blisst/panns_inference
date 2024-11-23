@@ -38,7 +38,7 @@ class AudioTagging(object):
 
         if device == 'cuda' and torch.cuda.is_available():
             self.device = 'cuda'
-        elif device == 'cuda' and not torch.cuda.is_available() and torch.backends.mps.is_available():
+        elif device == 'cuda' and not torch.cuda.is_available() and torch.backends.mps.is_available() or (device == 'mps' and torch.backends.mps.is_available()):
             self.device = 'mps'
         else:
             self.device = 'cpu'
